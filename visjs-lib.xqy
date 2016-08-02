@@ -23,10 +23,13 @@ declare function build-graph(
   let $q := "
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    SELECT ?predicate ?object ?label
+    SELECT (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate) ?object ?label
     WHERE {
-      ?subject ?predicate ?object .
-      FILTER(?predicate != rdfs:label &amp;&amp; ?predicate != rdf:type)
+      ?subject ?predicateUri ?object .
+      FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type)
+      OPTIONAL {
+        ?predicateUri rdfs:label ?predicateLabel .
+      }
       OPTIONAL {
         ?object rdfs:label ?label .
       }
