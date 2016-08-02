@@ -169,7 +169,7 @@ declare private function get-icon($subject as xs:string) as xs:string
   else if(fn:starts-with($subject, "/bulletin/")) then
     "images/icons/bulletin.png"
   else
-    "images/icons/generic.png"
+    "bower_components/ml-visjs-graph-ng/dist/images/generic.png"
 };
 
 declare private function get-node-color() as json:object
