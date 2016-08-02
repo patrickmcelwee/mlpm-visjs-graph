@@ -12,6 +12,7 @@ declare function build-graph(
   let $nodes-map := map:map()
 
   let $subject-labels := <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/2000/01/rdf-schema#label"))}</x>/*
+  let $subject-types := <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))}</x>/*
 
   let $_ :=
   for $subject in $subjects
@@ -20,14 +21,15 @@ declare function build-graph(
     map:entry("subject", sem:iri($subject))
   ))
   let $q := "
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?predicate ?object ?label
     WHERE {
       ?subject ?predicate ?object .
+      FILTER(?predicate != rdfs:label &amp;&amp; ?predicate != rdf:type)
       OPTIONAL {
-        ?object <http://www.w3.org/2000/01/rdf-schema#label> ?label .
+        ?object rdfs:label ?label .
       }
-      FILTER(regex(?object, ('/incident/', '/person/', '/bulletin/', '/vehicle/')))
-
     }
     LIMIT 100
   "
@@ -51,7 +53,6 @@ declare function build-graph(
   "
 
   let $results-obj := sem:sparql($q, $params)
-  let $_ := xdmp:log("object count: " || count($results-obj))
 
   return
         (
@@ -59,11 +60,12 @@ declare function build-graph(
           else
             let $node := json:object()
             let $label := ($subject-labels[sem:subject = $subject]/sem:object/string(), $subject)[1]
+            let $type := ($subject-types[sem:subject = $subject]/sem:object/string(), "unknown")[1]
             return (
               map:put($node, "label", $label),
               map:put($node, "id", $subject),
               map:put($node, "shape", "image"),
-              map:put($node, "type", "node"),
+              map:put($node, "type", $type),
               map:put($node, "linkCount", get-link-count($subject)),
               map:put($node, "image", get-icon($subject)),
               map:put($node, "color", get-node-color()),
@@ -158,18 +160,7 @@ declare function build-graph(
 
 declare private function get-icon($subject as xs:string) as xs:string
 {
-  if(fn:starts-with($subject, "/person/")) then
-    "images/icons/person.png"
-  else if(fn:starts-with($subject, "/vehicle/")) then
-    "images/icons/vehicle.png"
-  else if(fn:starts-with($subject, "/incident/")) then
-    "images/icons/incident.png"
-  else if(fn:starts-with($subject, "/event/")) then
-    "images/icons/event.png"
-  else if(fn:starts-with($subject, "/bulletin/")) then
-    "images/icons/bulletin.png"
-  else
-    "bower_components/ml-visjs-graph-ng/dist/images/generic.png"
+  "bower_components/ml-visjs-graph-ng/dist/images/generic.png"
 };
 
 declare private function get-node-color() as json:object
