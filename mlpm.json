@@ -1,6 +1,6 @@
 {
   "name": "visjs-graph",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A companion to the ml-visjs-graph-ng, providing server-side code to drive graph visualizations.",
   "repository": "https://github.com/patrickmcelwee/mlpm-visjs-graph.git"
 }
