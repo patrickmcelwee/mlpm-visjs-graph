@@ -179,15 +179,15 @@ declare function build-graph(
 
 };
 
-declare private function get-types($subjects as xs:string*) as node()
+declare private function get-types($subjects as xs:string*) as node()*
 {
   <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))}</x>/*
 };
 
 declare private function retrieve-type(
-  $types,
-  $uri
-) as xs:string
+  $types as node()*,
+  $uri as xs:string
+) as xs:string?
 {
   ($types[sem:subject = $uri]/sem:object/string(), "unknown")[1]
 };
