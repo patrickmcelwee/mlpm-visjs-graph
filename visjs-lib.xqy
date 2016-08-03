@@ -12,7 +12,7 @@ declare function build-graph(
   let $nodes-map := map:map()
 
   let $subject-labels := <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/2000/01/rdf-schema#label"))}</x>/*
-  let $subject-types := <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))}</x>/*
+  let $subject-types := get-types($subjects)
 
   let $_ :=
   for $subject in $subjects
@@ -24,6 +24,7 @@ declare function build-graph(
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate)
+           ?predicateUri
            ?object
            ?label
     WHERE {
@@ -50,6 +51,7 @@ declare function build-graph(
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?subject
            (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate)
+           ?predicateUri
            ?label
     WHERE {
       ?subject ?predicateUri ?object .
@@ -71,7 +73,7 @@ declare function build-graph(
           else
             let $node := json:object()
             let $label := ($subject-labels[sem:subject = $subject]/sem:object/string(), $subject)[1]
-            let $type := ($subject-types[sem:subject = $subject]/sem:object/string(), "unknown")[1]
+            let $type := retrieve-type($subject-types, $subject)
             return (
               map:put($node, "label", $label),
               map:put($node, "id", $subject),
@@ -86,11 +88,13 @@ declare function build-graph(
 
           for $result in $results
           let $object := map:get($result, "object")
+          let $object-types := get-types($object)
+          let $object-type := retrieve-type($object-types, $object)
           let $node := json:object()
           return (
             map:put($node, "label", (map:get($result, "label"),$object)[1]),
             map:put($node, "id", $object),
-            map:put($node, "type", "node"),
+            map:put($node, "type", $object-type),
             map:put($node, "shape", "image"),
             map:put($node, "linkCount", get-link-count($object)),
             map:put($node, "image", get-icon($object cast as xs:string)),
@@ -105,25 +109,29 @@ declare function build-graph(
               map:put($link, "from", $subject),
               map:put($link, "to", $object),
               let $predicate := map:get($result, "predicate")
-              let $predicate := (fn:tokenize($predicate, "#"), $predicate)[2] (: use the string after #, if any :)
+              let $predicate := (fn:tokenize($predicate, "#")[last()], $predicate)[1] (: use the string after #, if any :)
               let $predicate := xdmp:url-decode($predicate)
-              return map:put($link, "label", $predicate),
-              map:put($link, "type", "link"),
-              map:put($link, "color", get-link-color()),
-              map:put($link, "c", "#860082"),
-              map:put($link, "w", "4"),
-              map:put($link, "fb", "true"),
-              json:array-push($links, $link)
+              let $predicate-uri := map:get($result, "predicateUri")
+              return (map:put($link, "label", $predicate),
+                map:put($link, "type", $predicate-uri),
+                map:put($link, "color", get-link-color()),
+                map:put($link, "c", "#860082"),
+                map:put($link, "w", "4"),
+                map:put($link, "fb", "true"),
+                json:array-push($links, $link)
+              )
             )
           ),
 
           for $result in $results-obj
           let $subj := map:get($result, "subject")
+          let $subj-types := get-types($subj)
+          let $subj-type := retrieve-type($subj-types, $subj)
           let $node := json:object()
           return (
             map:put($node, "label", (map:get($result, "label"),$subj)[1]),
             map:put($node, "id", $subj),
-            map:put($node, "type", "node"),
+            map:put($node, "type", $subj-type),
             map:put($node, "shape", "image"),
             map:put($node, "linkCount", get-link-count($subj)),
             map:put($node, "image", get-icon($subj cast as xs:string)),
@@ -138,15 +146,17 @@ declare function build-graph(
               map:put($link, "from", $subj),
               map:put($link, "to", $subject),
               let $predicate := map:get($result, "predicate")
-              let $predicate := (fn:tokenize($predicate, "#"), $predicate)[2] (: use the string after #, if any :)
+              let $predicate := (fn:tokenize($predicate, "#")[last()], $predicate)[1] (: use the string after #, if any :)
               let $predicate := xdmp:url-decode($predicate)
-              return map:put($link, "label", $predicate),
-              map:put($link, "type", "link"),
-              map:put($link, "color", get-link-color()),
-              map:put($link, "c", "#860082"),
-              map:put($link, "w", "4"),
-              map:put($link, "fb", "true"),
-              json:array-push($links, $link)
+              let $predicate-uri := map:get($result, "predicateUri")
+              return (map:put($link, "label", $predicate),
+                map:put($link, "type", $predicate-uri),
+                map:put($link, "color", get-link-color()),
+                map:put($link, "c", "#860082"),
+                map:put($link, "w", "4"),
+                map:put($link, "fb", "true"),
+                json:array-push($links, $link)
+              )
             )
           )
         )
@@ -167,6 +177,19 @@ declare function build-graph(
       )
     }
 
+};
+
+declare private function get-types($subjects as xs:string*) as node()
+{
+  <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))}</x>/*
+};
+
+declare private function retrieve-type(
+  $types,
+  $uri
+) as xs:string
+{
+  ($types[sem:subject = $uri]/sem:object/string(), "unknown")[1]
 };
 
 declare private function get-icon($subject as xs:string) as xs:string
@@ -201,7 +224,6 @@ declare private function get-link-color() as json:object
 declare private function get-label($subject as xs:string) as xs:string
 {
   let $tokens := tokenize($subject, "/")
-  let $_ := xdmp:log("Token count: " || count($tokens))
   return
     if (count($tokens) = 1) then $subject
     else $tokens[last() - 1] || "/" || $tokens[last()]
