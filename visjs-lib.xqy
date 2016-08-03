@@ -23,7 +23,9 @@ declare function build-graph(
   let $q := "
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    SELECT (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate) ?object ?label
+    SELECT (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate)
+           ?object
+           ?label
     WHERE {
       ?subject ?predicateUri ?object .
       FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type)
@@ -39,18 +41,24 @@ declare function build-graph(
   
   let $results := sem:sparql($q, $params)
 
-  (: Do separate query for objects. :)
+  (: Do separate query for triples where our uri is the object. :)
   let $params := map:new((
     map:entry("object", sem:iri($subject))
   ))
   let $q := "
-    SELECT ?subject ?predicate ?label
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    SELECT ?subject
+           (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate)
+           ?label
     WHERE {
-      ?subject ?predicate ?object .
+      ?subject ?predicateUri ?object .
       OPTIONAL {
-        ?subject <http://www.w3.org/2000/01/rdf-schema#label> ?label .
+        ?subject rdfs:label ?label .
       }
-      FILTER(regex(?subject, ('/incident/', '/person/', '/bulletin/', '/vehicle/')))
+      OPTIONAL {
+        ?predicateUri rdfs:label ?predicateLabel .
+      }
     }
     LIMIT 100
   "
