@@ -20,7 +20,8 @@ declare function build-graph(
   let $params := map:new((
     map:entry("subject", sem:iri($subject))
   ))
-  let $q := "
+  let $q := fn:concat(
+    "
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT (COALESCE(?predicateLabel, ?predicateUri) AS ?predicate)
@@ -28,8 +29,9 @@ declare function build-graph(
            ?object
            ?label
     WHERE {
-      ?subject ?predicateUri ?object .
-      FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type)
+      ?subject ?predicateUri ?object . ",
+    sparql-filter(),
+    "
       OPTIONAL {
         ?predicateUri rdfs:label ?predicateLabel .
       }
@@ -38,7 +40,7 @@ declare function build-graph(
       }
     }
     LIMIT 100
-  "
+    ")
   
   let $results := sem:sparql($q, $params)
 
@@ -82,7 +84,6 @@ declare function build-graph(
               map:put($node, "linkCount", get-link-count($subject)),
               map:put($node, "image", get-icon($subject)),
               map:put($node, "color", get-node-color()),
-              map:put($node, "g", build-glyphs($subject)),
               map:put($nodes-map, $subject, $node)
             ),
 
@@ -99,7 +100,6 @@ declare function build-graph(
             map:put($node, "linkCount", get-link-count($object)),
             map:put($node, "image", get-icon($object cast as xs:string)),
             map:put($node, "color", get-node-color()),
-            map:put($node, "g", build-glyphs($object)),
             map:put($nodes-map, $object, $node),
 
             let $link := json:object()
@@ -136,7 +136,6 @@ declare function build-graph(
             map:put($node, "linkCount", get-link-count($subj)),
             map:put($node, "image", get-icon($subj cast as xs:string)),
             map:put($node, "color", get-node-color()),
-            map:put($node, "g", build-glyphs($subj)),
             map:put($nodes-map, $subj, $node),
 
             let $link := json:object()
@@ -229,45 +228,25 @@ declare private function get-label($subject as xs:string) as xs:string
     else $tokens[last() - 1] || "/" || $tokens[last()]
 };
 
-declare private function build-glyphs($subject) as json:array?
+declare private function sparql-filter() as xs:string
 {
-  let $nw := map:new((
-    map:entry("t", "+"),
-    map:entry("c", "#828600"),
-    map:entry("p", "nw")
-  ))
-  let $count :=
-    if(sem:isIRI($subject)) then
-      count(cts:triples(sem:iri($subject))) + count(cts:triples((), (), sem:iri($subject)))
-    else
-      0
-  where $count > 0
-  return
-    let $ne := map:new((
-      map:entry("c", "#86003f"),
-      map:entry("p", "ne"),
-      map:entry("t", if ($count lt 101) then string($count) else "100+")
-    ))
-    let $arr := json:array()
-    return (
-      json:array-push($arr, $ne),
-      json:array-push($arr, $nw),
-      $arr
-    )
+  " FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type) "
 };
 
 declare private function get-link-count($subject) as xs:int
 {
 
   let $params := map:new( map:entry("subject", sem:iri($subject)) )
-  let $q := "
+  let $q := fn:concat(
+    "
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT (COUNT(DISTINCT ?object) AS ?count)
     WHERE {
       {
-        ?subject ?predicateUri ?object .
-        FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type)
+        ?subject ?predicateUri ?object . ",
+    sparql-filter(),
+    "
       }
       UNION
       {
@@ -275,7 +254,7 @@ declare private function get-link-count($subject) as xs:int
       }
     }
     LIMIT 200
-  "
+    ")
   
   let $count := 
     if (sem:isIRI($subject)) then
