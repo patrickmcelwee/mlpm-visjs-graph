@@ -256,31 +256,32 @@ declare private function build-glyphs($subject) as json:array?
     )
 };
 
-declare private function get-link-count($subject) as xs:string
+declare private function get-link-count($subject) as xs:int
 {
 
   let $params := map:new( map:entry("subject", sem:iri($subject)) )
   let $q := "
-    SELECT DISTINCT ?object
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    SELECT (COUNT(DISTINCT ?object) AS ?count)
     WHERE {
       {
-        ?subject ?predicate ?object .
-        FILTER(regex(?object, ('/incident/', '/person/', '/bulletin/', '/vehicle/')))
+        ?subject ?predicateUri ?object .
+        FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type)
       }
       UNION
       {
         ?object ?predicate ?subject
-        FILTER(regex(?object, ('/incident/', '/person/', '/bulletin/', '/vehicle/')))
       }
     }
-    LIMIT 100
+    LIMIT 200
   "
   
   let $count := 
     if (sem:isIRI($subject)) then
-      count( sem:sparql($q, $params) )
+      map:get(sem:sparql($q, $params), "count")
     else
       0
 
-  return string($count)
+  return $count
 };
