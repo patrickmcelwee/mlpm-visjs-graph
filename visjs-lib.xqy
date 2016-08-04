@@ -81,7 +81,6 @@ declare function build-graph(
               map:put($node, "id", $subject),
               map:put($node, "group", $type),
               map:put($node, "linkCount", get-link-count($subject)),
-              map:put($node, "color", get-node-color()),
               map:put($nodes-map, $subject, $node)
             ),
 
@@ -94,9 +93,7 @@ declare function build-graph(
             map:put($node, "label", (map:get($result, "label"),$object)[1]),
             map:put($node, "id", $object),
             map:put($node, "group", $object-type),
-            map:put($node, "shape", "image"),
             map:put($node, "linkCount", get-link-count($object)),
-            map:put($node, "color", get-node-color()),
             map:put($nodes-map, $object, $node),
 
             let $link := json:object()
@@ -111,7 +108,6 @@ declare function build-graph(
               let $predicate-uri := map:get($result, "predicateUri")
               return (map:put($link, "label", $predicate),
                 map:put($link, "type", $predicate-uri),
-                map:put($link, "color", get-link-color()),
                 map:put($link, "c", "#860082"),
                 map:put($link, "w", "4"),
                 map:put($link, "fb", "true"),
@@ -130,7 +126,6 @@ declare function build-graph(
             map:put($node, "id", $subj),
             map:put($node, "group", $subj-type),
             map:put($node, "linkCount", get-link-count($subj)),
-            map:put($node, "color", get-node-color()),
             map:put($nodes-map, $subj, $node),
 
             let $link := json:object()
@@ -145,7 +140,6 @@ declare function build-graph(
               let $predicate-uri := map:get($result, "predicateUri")
               return (map:put($link, "label", $predicate),
                 map:put($link, "type", $predicate-uri),
-                map:put($link, "color", get-link-color()),
                 map:put($link, "c", "#860082"),
                 map:put($link, "w", "4"),
                 map:put($link, "fb", "true"),
@@ -184,30 +178,6 @@ declare private function retrieve-type(
 ) as xs:string?
 {
   ($types[sem:subject = $uri]/sem:object/string(), "unknown")[1]
-};
-
-declare private function get-node-color() as json:object
-{
-  let $color-node := json:object()
-  let $highlight-node := json:object()
-  let $_ := (
-    map:put($highlight-node, "background", "white"),
-    map:put($highlight-node, "border", "#860082"),
-    map:put($color-node, "highlight", $highlight-node),
-    map:put($color-node, "background", "white"),
-    map:put($color-node, "border", "black")
-  )
-
-  return $color-node
-};
-
-declare private function get-link-color() as json:object
-{
-  let $color-node := json:object()
-  let $_ := map:put($color-node, "color", "#860082")
-  let $_ := map:put($color-node, "highlight", "#860082")
-
-  return $color-node
 };
 
 declare private function get-label($subject as xs:string) as xs:string
