@@ -108,9 +108,6 @@ declare function build-graph(
               let $predicate-uri := map:get($result, "predicateUri")
               return (map:put($link, "label", $predicate),
                 map:put($link, "type", $predicate-uri),
-                map:put($link, "c", "#860082"),
-                map:put($link, "w", "4"),
-                map:put($link, "fb", "true"),
                 json:array-push($links, $link)
               )
             )
@@ -140,9 +137,6 @@ declare function build-graph(
               let $predicate-uri := map:get($result, "predicateUri")
               return (map:put($link, "label", $predicate),
                 map:put($link, "type", $predicate-uri),
-                map:put($link, "c", "#860082"),
-                map:put($link, "w", "4"),
-                map:put($link, "fb", "true"),
                 json:array-push($links, $link)
               )
             )
