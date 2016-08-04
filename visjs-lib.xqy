@@ -79,10 +79,8 @@ declare function build-graph(
             return (
               map:put($node, "label", $label),
               map:put($node, "id", $subject),
-              map:put($node, "shape", "image"),
-              map:put($node, "type", $type),
+              map:put($node, "group", $type),
               map:put($node, "linkCount", get-link-count($subject)),
-              map:put($node, "image", get-icon($subject)),
               map:put($node, "color", get-node-color()),
               map:put($nodes-map, $subject, $node)
             ),
@@ -95,10 +93,9 @@ declare function build-graph(
           return (
             map:put($node, "label", (map:get($result, "label"),$object)[1]),
             map:put($node, "id", $object),
-            map:put($node, "type", $object-type),
+            map:put($node, "group", $object-type),
             map:put($node, "shape", "image"),
             map:put($node, "linkCount", get-link-count($object)),
-            map:put($node, "image", get-icon($object cast as xs:string)),
             map:put($node, "color", get-node-color()),
             map:put($nodes-map, $object, $node),
 
@@ -131,10 +128,8 @@ declare function build-graph(
           return (
             map:put($node, "label", (map:get($result, "label"),$subj)[1]),
             map:put($node, "id", $subj),
-            map:put($node, "type", $subj-type),
-            map:put($node, "shape", "image"),
+            map:put($node, "group", $subj-type),
             map:put($node, "linkCount", get-link-count($subj)),
-            map:put($node, "image", get-icon($subj cast as xs:string)),
             map:put($node, "color", get-node-color()),
             map:put($nodes-map, $subj, $node),
 
@@ -189,11 +184,6 @@ declare private function retrieve-type(
 ) as xs:string?
 {
   ($types[sem:subject = $uri]/sem:object/string(), "unknown")[1]
-};
-
-declare private function get-icon($subject as xs:string) as xs:string
-{
-  "bower_components/ml-visjs-graph-ng/dist/images/generic.png"
 };
 
 declare private function get-node-color() as json:object
