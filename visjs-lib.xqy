@@ -8,7 +8,7 @@ declare function build-graph(
   )
 {
   let $nodes := json:array()
-  let $links := json:array()
+  let $edges := json:array()
   let $nodes-map := map:map()
 
   let $subject-labels := <x>{cts:triples($subjects ! sem:iri(.), sem:iri("http://www.w3.org/2000/01/rdf-schema#label"))}</x>/*
@@ -80,7 +80,7 @@ declare function build-graph(
               map:put($node, "label", $label),
               map:put($node, "id", $subject),
               map:put($node, "group", $type),
-              map:put($node, "linkCount", get-link-count($subject)),
+              map:put($node, "edgeCount", get-edge-count($subject)),
               map:put($nodes-map, $subject, $node)
             ),
 
@@ -93,22 +93,22 @@ declare function build-graph(
             map:put($node, "label", (map:get($result, "label"),$object)[1]),
             map:put($node, "id", $object),
             map:put($node, "group", $object-type),
-            map:put($node, "linkCount", get-link-count($object)),
+            map:put($node, "edgeCount", get-edge-count($object)),
             map:put($nodes-map, $object, $node),
 
-            let $link := json:object()
+            let $edge := json:object()
             where $subject != $object cast as xs:string
             return (
-              map:put($link, "id", "link-" || $subject || "-" || $object),
-              map:put($link, "from", $subject),
-              map:put($link, "to", $object),
+              map:put($edge, "id", "edge-" || $subject || "-" || $object),
+              map:put($edge, "from", $subject),
+              map:put($edge, "to", $object),
               let $predicate := map:get($result, "predicate")
               let $predicate := (fn:tokenize($predicate, "#")[last()], $predicate)[1] (: use the string after #, if any :)
               let $predicate := xdmp:url-decode($predicate)
               let $predicate-uri := map:get($result, "predicateUri")
-              return (map:put($link, "label", $predicate),
-                map:put($link, "type", $predicate-uri),
-                json:array-push($links, $link)
+              return (map:put($edge, "label", $predicate),
+                map:put($edge, "type", $predicate-uri),
+                json:array-push($edges, $edge)
               )
             )
           ),
@@ -122,22 +122,22 @@ declare function build-graph(
             map:put($node, "label", (map:get($result, "label"),$subj)[1]),
             map:put($node, "id", $subj),
             map:put($node, "group", $subj-type),
-            map:put($node, "linkCount", get-link-count($subj)),
+            map:put($node, "edgeCount", get-edge-count($subj)),
             map:put($nodes-map, $subj, $node),
 
-            let $link := json:object()
+            let $edge := json:object()
             where $subject != $subj cast as xs:string
             return (
-              map:put($link, "id", "link-" || $subj || "-" || $subject),
-              map:put($link, "from", $subj),
-              map:put($link, "to", $subject),
+              map:put($edge, "id", "edge-" || $subj || "-" || $subject),
+              map:put($edge, "from", $subj),
+              map:put($edge, "to", $subject),
               let $predicate := map:get($result, "predicate")
               let $predicate := (fn:tokenize($predicate, "#")[last()], $predicate)[1] (: use the string after #, if any :)
               let $predicate := xdmp:url-decode($predicate)
               let $predicate-uri := map:get($result, "predicateUri")
-              return (map:put($link, "label", $predicate),
-                map:put($link, "type", $predicate-uri),
-                json:array-push($links, $link)
+              return (map:put($edge, "label", $predicate),
+                map:put($edge, "type", $predicate-uri),
+                json:array-push($edges, $edge)
               )
             )
           )
@@ -154,7 +154,7 @@ declare function build-graph(
       xdmp:to-json(
         let $data-object := json:object()
         let $_ := map:put($data-object, "nodes", $nodes)
-        let $_ := map:put($data-object, "links", $links)
+        let $_ := map:put($data-object, "edges", $edges)
         return $data-object
       )
     }
@@ -187,7 +187,7 @@ declare private function sparql-filter() as xs:string
   " FILTER(?predicateUri != rdfs:label &amp;&amp; ?predicateUri != rdf:type) "
 };
 
-declare private function get-link-count($subject) as xs:int
+declare private function get-edge-count($subject) as xs:int
 {
 
   let $params := map:new( map:entry("subject", sem:iri($subject)) )
