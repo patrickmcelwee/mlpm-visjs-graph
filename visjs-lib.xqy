@@ -56,16 +56,13 @@ declare function visjs:build-graph(
           (COALESCE(?subjectLabel, ?subject) AS ?label)
           (COALESCE(?subjectType, 'unknown') AS ?type)
         WHERE {
-          {
-            ?subject ?predicateUri [] .
-          }
           OPTIONAL {
             ?subject rdfs:label ?subjectLabel .
           }
           OPTIONAL {
             ?subject rdf:type ?subjectType .
           }
-        }
+        } LIMIT 1
       "),
       map:new((
         map:entry("subject", sem:iri($node-uri))
