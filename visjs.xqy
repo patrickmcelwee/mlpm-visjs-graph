@@ -2,7 +2,7 @@ xquery version "1.0-ml";
 
 module namespace resource = "http://marklogic.com/rest-api/resource/visjs";
 
-import module namespace kl = "http://leis.irad/visjs" at "/ext/mlpm_modules/visjs-graph/visjs-lib.xqy";
+import module namespace visjs = "http://marklogic.com/visjs/graph" at "/ext/mlpm_modules/visjs-graph/visjs-lib.xqy";
 
 import module namespace json = "http://marklogic.com/xdmp/json" at "/MarkLogic/json/json.xqy";
 import module namespace sem = "http://marklogic.com/semantics" at "/MarkLogic/semantics.xqy";
@@ -54,6 +54,6 @@ declare function get(
 ) as document-node()*
 {
   let $subject := map:get($params, "subject")
-  return kl:build-graph($subject)
+  return visjs:build-graph($subject)
 };
 

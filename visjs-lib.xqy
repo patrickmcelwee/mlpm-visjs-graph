@@ -1,6 +1,6 @@
 xquery version "1.0-ml";
 
-module namespace visjs = "http://leis.irad/visjs";
+module namespace visjs = "http://marklogic.com/visjs/graph";
 
 declare default function namespace "http://www.w3.org/2005/xpath-functions";
 
