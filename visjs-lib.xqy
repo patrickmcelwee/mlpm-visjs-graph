@@ -6,10 +6,7 @@ declare default function namespace "http://www.w3.org/2005/xpath-functions";
 
 declare option xdmp:mapping "false";
 
-declare function visjs:build-graph(
-  $subjects,
-  $is-expand as xs:boolean
-  )
+declare function visjs:build-graph($subjects)
 {
   let $subject-iris := $subjects ! sem:iri(.)
   let $edge-triples := sem:sparql(

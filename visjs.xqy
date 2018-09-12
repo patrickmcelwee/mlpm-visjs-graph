@@ -54,6 +54,6 @@ declare function get(
 ) as document-node()*
 {
   let $subject := map:get($params, "subject")
-  return kl:build-graph($subject, map:get($params, "expand") = "true")
+  return kl:build-graph($subject)
 };
 
