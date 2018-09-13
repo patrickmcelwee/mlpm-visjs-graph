@@ -53,7 +53,7 @@ declare function get(
   $params  as map:map
 ) as document-node()*
 {
-  let $subject := map:get($params, "subject")
-  return visjs:build-graph($subject)
+  let $subjects := map:get($params, "subjects")
+  return visjs:build-graph($subjects)
 };
 
